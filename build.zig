@@ -15,7 +15,7 @@ pub fn build(b: *std.Build) !void {
 
     const sdl3 = b.dependency("sdl3", .{});
 
-    { // & "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" "VisualC/SDL.sln" /p:Configuration=Release
+    {
         const sdl3_build_cmd = switch (target.result.os.tag) {
             .windows => if (b.host.result.os.tag != .windows) &[_][]const u8 {
                 "/bin/sh",
