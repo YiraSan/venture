@@ -15,34 +15,33 @@ pub fn build(b: *std.Build) !void {
 
     const sdl3 = b.dependency("sdl3", .{});
 
-    {
+    { // & "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" "VisualC/SDL.sln" /p:Configuration=Release
         const sdl3_build_cmd = switch (target.result.os.tag) {
-            .windows => &[_][]const u8 {
-                "cmd.exe",
-                "/C",
-                b.fmt(
-                    "cd {s} && cmake -S . -B build -DSDL_STATIC=ON -DSDL_SHARED=OFF -DCMAKE_C_COMPILER=clang && cmake --build build",
-                    .{sdl3.path(".").getPath(b)}
-                ),
+            .windows => if (b.host.result.os.tag != .windows) &[_][]const u8 {
+                "/bin/sh",
+                "-c",
+                "cmake -S . -B build -DSDL_STATIC=ON -DSDL_SHARED=OFF -DCMAKE_TOOLCHAIN_FILE=build-scripts/cmake-toolchain-mingw64-x86_64.cmake && cmake --build build",
+            } else &[_][]const u8 {
+                "powershell.exe",
+                "-Command",
+                "\"& 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe' 'VisualC/SDL.sln' /p:Configuration=Release\"",
             },
             else => &[_][]const u8 {
                 "/bin/sh",
                 "-c",
-                b.fmt(
-                    "cd {s} && cmake -S . -B build -DSDL_STATIC=ON -DSDL_SHARED=OFF -DCMAKE_C_COMPILER=clang && cmake --build build",
-                    .{sdl3.path(".").getPath(b)}
-                ),
+                "cmake -S . -B build -DSDL_STATIC=ON -DSDL_SHARED=OFF -DCMAKE_C_COMPILER=clang && cmake --build build",
             },
         };
         var child_proc = std.process.Child.init(sdl3_build_cmd, b.allocator);
         child_proc.stdout_behavior = .Ignore;
+        child_proc.cwd = sdl3.path(".").getPath(b);
         try child_proc.spawn();
         const ret_val = try child_proc.wait();
         try std.testing.expectEqual(ret_val, std.process.Child.Term { .Exited = 0 });
     }
 
     switch (target.result.os.tag) {
-        .windows => venture.addObjectFile(sdl3.path("build/SDL3.lib")),
+        .windows => venture.addObjectFile(sdl3.path("VisualC/Win32/Release/SDL3.lib")),
         else => venture.addObjectFile(sdl3.path("build/libSDL3.a")),
     }
     

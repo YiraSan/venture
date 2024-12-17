@@ -6,6 +6,10 @@ Build is currently tested using:
 > Clang `16.0.0` and `19.1.4`,
 > Cmake `3.31.1`
 
+On Windows, you only need to install Visual Studio Build Tools 2022 (C++).
+If trying to cross-compile from macOS/Linux to Windows, you will need mingw64.
+However, cross-compiling is only supported to Windows.
+
 In order to build the static/shared libraries:
 > `zig build static_lib` / `zig build shared_lib`
 
