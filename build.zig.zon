@@ -1,0 +1,23 @@
+.{
+    .name = "venture",
+    .version = "0.1.0",
+    .minimum_zig_version = "0.14.0-dev.2502+d12c0bf90",
+
+    .dependencies = .{
+        .sdl3 = .{
+            .url = "https://github.com/libsdl-org/SDL/releases/download/preview-3.1.6/SDL3-3.1.6.tar.gz",
+            .hash = "12208a3e9a540f4df5d2b56ae113ed62d32901146ca00278708d15d3a07257dbbdc4"
+        },
+        
+        .vulkan_zig = .{
+            .url = "https://github.com/Snektron/vulkan-zig/archive/dd6e61d68954a2eaa476044305dc227081a8d3fe.tar.gz",
+            .hash = "122064f889ea10097a67fc28744fe95d0bfde9af252de147a9b90aa55cecfc30c01c",
+        },
+        .vulkan_headers = .{
+            .url = "https://github.com/KhronosGroup/Vulkan-Headers/archive/v1.3.296.tar.gz",
+            .hash = "1220d8deff13f2e31607eb0771cb316abc7753f79424aef3edb653a101ec942ce981",
+        },
+    },
+
+    .paths = .{ "build.zig", "build.zig.zon", "venture", "libventure", "license" },
+}
