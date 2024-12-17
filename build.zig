@@ -46,7 +46,23 @@ pub fn build(b: *std.Build) !void {
         else => venture.addObjectFile(sdl3.path("build/libSDL3.a")),
     }
     
-    venture.addIncludePath(sdl3.path("include/"));
+    const sdl_header = b.addTranslateC(.{
+        .root_source_file = sdl3.path("include/SDL3/SDL.h"),
+        .target = target,
+        .optimize = optimize,
+        .use_clang = true,
+    });
+    sdl_header.addIncludePath(sdl3.path("include/"));
+    venture.addImport("sdl", sdl_header.createModule());
+
+    const sdl_vulkan_header = b.addTranslateC(.{
+        .root_source_file = sdl3.path("include/SDL3/SDL_vulkan.h"),
+        .target = target,
+        .optimize = optimize,
+        .use_clang = true,
+    });
+    sdl_vulkan_header.addIncludePath(sdl3.path("include/"));
+    venture.addImport("sdl_vulkan", sdl_vulkan_header.createModule());
 
     // vulkan headers version should match latest MoltenVK release and SDL3 supported versions
     const vulkan_headers = b.dependency("vulkan_headers", .{});
@@ -56,6 +72,31 @@ pub fn build(b: *std.Build) !void {
     });
     const vkzig_bindings = vkzig_dep.module("vulkan-zig");
     venture.addImport("vulkan", vkzig_bindings);
+
+    switch (target.result.os.tag) {
+        .macos => {
+            venture.linkFramework("Foundation", .{});
+            venture.linkFramework("AVFoundation", .{});
+            venture.linkFramework("Carbon", .{});
+            venture.linkFramework("Cocoa", .{});
+            venture.linkFramework("IOKit", .{});
+            venture.linkFramework("QuartzCore", .{});
+            venture.linkFramework("Metal", .{});
+            venture.linkFramework("GameController", . {});
+            venture.linkFramework("CoreServices", .{});
+            venture.linkFramework("CoreVideo", .{});
+            venture.linkFramework("CoreFoundation", .{});
+            venture.linkFramework("CoreAudio", .{});
+            venture.linkFramework("CoreMedia", .{});
+            venture.linkFramework("CoreHaptics", .{});
+            venture.linkFramework("AudioToolbox", .{});
+            venture.linkFramework("CoreText", .{});
+            venture.linkFramework("CoreGraphics", .{});
+            venture.linkFramework("ForceFeedback", .{});
+            venture.linkFramework("UniformTypeIdentifiers", .{});
+        },
+        else => {},
+    }
 
     // C Static Library
 
