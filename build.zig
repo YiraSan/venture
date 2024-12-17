@@ -66,7 +66,9 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
     libventure.root_module.addImport("venture", venture);
-    b.installArtifact(libventure);
+
+    const static_step = b.step("static", "build c static library");
+    static_step.dependOn(&b.addInstallArtifact(libventure, .{}).step);
 
     // C Shared Library
 
@@ -77,6 +79,8 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
     shared_libventure.root_module.addImport("venture", venture);
-    b.installArtifact(shared_libventure);
+    
+    const shared_step = b.step("shared", "build c shared library");
+    shared_step.dependOn(&b.addInstallArtifact(libventure, .{}).step);
 
 }
