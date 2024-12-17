@@ -34,8 +34,8 @@ pub fn build(b: *std.Build) !void {
                 ),
             },
         };
-        std.debug.print("{s}\n", .{sdl3_build_cmd});
         var child_proc = std.process.Child.init(sdl3_build_cmd, b.allocator);
+        child_proc.stdout_behavior = .Ignore;
         try child_proc.spawn();
         const ret_val = try child_proc.wait();
         try std.testing.expectEqual(ret_val, std.process.Child.Term { .Exited = 0 });
