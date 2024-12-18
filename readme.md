@@ -1,12 +1,6 @@
 # venture
 
-You will need `zig`, `clang` and `cmake` to build venture.
-Build is currently tested using:
-> Zig `0.14.0-dev.2502+d12c0bf90`,
-> Clang `16+` (not required compiling to Windows)
-> Cmake `3.31+` (not required compiling to Windows)
-
-(windows is currently not available)
+You will need `zig 0.14.0-dev.2502+d12c0bf90` to build venture.
 
 In order to build the static/shared libraries:
 > `zig build static_lib` / `zig build shared_lib`

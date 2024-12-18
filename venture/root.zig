@@ -1,4 +1,4 @@
-pub const view = @import("view/root.zig");
+pub const View = @import("view/View.zig");
 
 // init / deinit
 
@@ -11,13 +11,16 @@ pub const InitError = error {
 
 /// This function should be called from your application' main thread
 pub fn init() InitError!void {
-    const sdl_initialized = (sdl.SDL_WasInit(sdl.SDL_INIT_VIDEO) & sdl.SDL_INIT_VIDEO) == sdl.SDL_INIT_VIDEO;
-    if (!sdl_initialized) if (!sdl.SDL_Init(sdl.SDL_INIT_VIDEO)) {
+    if (!sdl.SDL_Init(sdl.SDL_INIT_VIDEO)) {
         std.log.err("Couldn't initialize SDL: {s}", .{ sdl.SDL_GetError() });
         return InitError.SDL_INITIALIZATION_FAILURE;
-    };
+    }
+}
+
+pub fn delay(ms: u32) void {
+    sdl.SDL_Delay(ms);
 }
 
 pub fn deinit() void {
-    // currently unused, but created for retro-compatibility
+    sdl.SDL_Quit();
 }

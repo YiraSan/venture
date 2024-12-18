@@ -15,6 +15,10 @@ pub fn build(b: *std.Build) void {
     const venture = b.dependency("venture", .{});
     exe.root_module.addImport("venture", venture.module("venture"));
 
+    if (optimize == .ReleaseFast or optimize == .ReleaseSmall) {
+        exe.linkLibC();
+    }
+
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);

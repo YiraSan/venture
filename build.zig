@@ -100,20 +100,53 @@ pub fn build(b: *std.Build) !void {
             venture.linkFramework("AudioToolbox", .{});
             venture.linkFramework("CoreText", .{});
             venture.linkFramework("CoreGraphics", .{});
+            venture.linkFramework("AppKit", .{});
+            venture.linkFramework("MetalKit", .{});
             venture.linkFramework("ForceFeedback", .{});
             venture.linkFramework("UniformTypeIdentifiers", .{});
         },
         else => {},
     }
 
-    // vulkan headers version should match latest MoltenVK release and SDL3 supported versions
-    const vulkan_headers = b.dependency("vulkan_headers", .{});
+    // wgpu
 
-    const vkzig_dep = b.dependency("vulkan_zig", .{
-        .registry = @as([]const u8, vulkan_headers.path("registry/vk.xml").getPath(b)),
+    const wgpu = switch (target.result.os.tag) {
+        .windows => switch (target.result.cpu.arch) {
+            .x86_64 => b.dependency("wgpu_windows_x64", .{}),
+            else => @panic("unsupported cpu")
+        },
+        .macos => switch (target.result.cpu.arch) {
+            .x86_64 => b.dependency("wgpu_macos_x64", .{}),
+            .aarch64 => b.dependency("wgpu_macos_aarch64", .{}),
+            else => @panic("unsupported cpu")
+        },
+        .linux => switch (target.result.cpu.arch) {
+            .x86_64 => b.dependency("wgpu_linux_x64", .{}),
+            .aarch64 => b.dependency("wgpu_linux_aarch64", .{}),
+            else => @panic("unsupported cpu")
+        },
+        else => @panic("unsupported os")
+    };
+
+    venture.addObjectFile(wgpu.path("lib/libwgpu_native.a"));
+
+    const webgpu_header = b.addTranslateC(.{
+        .root_source_file = wgpu.path("include/webgpu/webgpu.h"),
+        .target = target,
+        .optimize = optimize,
+        .use_clang = true,
     });
-    const vkzig_bindings = vkzig_dep.module("vulkan-zig");
-    venture.addImport("vulkan", vkzig_bindings);
+    webgpu_header.addIncludePath(wgpu.path("include"));
+    venture.addImport("webgpu", webgpu_header.createModule());
+
+    const wgpu_header = b.addTranslateC(.{
+        .root_source_file = wgpu.path("include/wgpu/wgpu.h"),
+        .target = target,
+        .optimize = optimize,
+        .use_clang = true,
+    });
+    wgpu_header.addIncludePath(wgpu.path("include"));
+    venture.addImport("wgpu", wgpu_header.createModule());
 
     // C Static Library
 
