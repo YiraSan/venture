@@ -8,6 +8,10 @@
             .url = "https://github.com/libsdl-org/SDL/releases/download/preview-3.1.6/SDL3-3.1.6.tar.gz",
             .hash = "12208a3e9a540f4df5d2b56ae113ed62d32901146ca00278708d15d3a07257dbbdc4"
         },
+        .sdl3_mingw = .{
+            .url = "https://github.com/libsdl-org/SDL/releases/download/preview-3.1.3/SDL3-devel-3.1.3-mingw.zip",
+            .hash = "1220386ed0b3d87c0f6d7710e20b1ccbd7bf1744e15f929f4bcb4d21bb3bcf31960a"
+        },
         
         .vulkan_zig = .{
             .url = "https://github.com/Snektron/vulkan-zig/archive/dd6e61d68954a2eaa476044305dc227081a8d3fe.tar.gz",
