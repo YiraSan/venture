@@ -81,7 +81,19 @@ pub fn build(b: *std.Build) !void {
 
     switch (target.result.os.tag) {
         .windows => {
-
+            venture.linkSystemLibrary("gdi32", .{});
+            venture.linkSystemLibrary("cfgmgr32", .{});
+            venture.linkSystemLibrary("oleaut32", .{});
+            venture.linkSystemLibrary("ole32", .{});
+            venture.linkSystemLibrary("opengl32", .{});
+            venture.linkSystemLibrary("imm32", .{});
+            venture.linkSystemLibrary("d3dcompiler_47", .{});
+            venture.linkSystemLibrary("ws2_32", .{});
+            venture.linkSystemLibrary("setupapi", .{});
+            venture.linkSystemLibrary("version", .{});
+            venture.linkSystemLibrary("userenv", .{});
+            venture.linkSystemLibrary("unwind", .{});
+            venture.linkSystemLibrary("winmm", .{});
         },
         .macos => {
             venture.linkFramework("Foundation", .{});
