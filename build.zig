@@ -10,6 +10,7 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     });
+    venture.addImport("venture", venture);
 
     // sdl3 build static library
 
@@ -136,7 +137,7 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
         .use_clang = true,
     });
-    webgpu_header.addIncludePath(wgpu.path("include"));
+    webgpu_header.addIncludePath(wgpu.path("include/wgpu/"));
     venture.addImport("webgpu", webgpu_header.createModule());
 
     const wgpu_header = b.addTranslateC(.{
@@ -145,7 +146,7 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
         .use_clang = true,
     });
-    wgpu_header.addIncludePath(wgpu.path("include"));
+    wgpu_header.addIncludePath(wgpu.path("include/webgpu/"));
     venture.addImport("wgpu", wgpu_header.createModule());
 
     // C Static Library
