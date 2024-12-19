@@ -117,6 +117,25 @@ pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
                 }),
             }
         );
+    } else if (std.mem.eql(u8, std.mem.span(video_driver), "windows")) {
+        // not tested
+        const hwnd = sdl.SDL_GetPointerProperty(sdl.SDL_GetWindowProperties(window), sdl.SDL_PROP_WINDOW_WIN32_HWND_POINTER, null);
+        const instance = sdl.SDL_GetPointerProperty(sdl.SDL_GetWindowProperties(window), sdl.SDL_PROP_WINDOW_WIN32_INSTANCE_POINTER, null);
+        if (hwnd == null or instance == null) {
+            @panic("fatal error, cannot get win32 hwnd pointer");
+        }
+        view.wgpu_surface = wgpu.wgpuInstanceCreateSurface(
+            view.journey.wgpu_instance,
+            &wgpu.WGPUSurfaceDescriptor {
+                .nextInChain = @ptrCast(&wgpu.struct_WGPUSurfaceDescriptorFromWindowsHWND {
+                    .chain = wgpu.WGPUChainedStruct {
+                        .sType = wgpu.WGPUSType_SurfaceDescriptorFromWindowsHWND
+                    },
+                    .hinstance = instance,
+                    .hwnd = hwnd,
+                }),
+            }
+        );
     } else {
         std.log.err("unsupported video driver: {s}", .{video_driver});
         unreachable;
