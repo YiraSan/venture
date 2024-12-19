@@ -316,7 +316,7 @@ pub fn render(self: *View, scene: *venture.Scene) !void {
 
     wgpu.wgpuRenderPassEncoderSetPipeline(render_pass_encoder, self.render_pipeline);
 
-    try scene.__view_render(self, render_pass_encoder);
+    try venture.Scene.__render_scene(scene, self, render_pass_encoder);
 
     wgpu.wgpuRenderPassEncoderEnd(render_pass_encoder);
     wgpu.wgpuRenderPassEncoderRelease(render_pass_encoder);
