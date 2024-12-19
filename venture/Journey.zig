@@ -97,8 +97,8 @@ pub inline fn createView(self: *Journey, options: venture.View.ViewOptions) !*ve
     return try venture.View.create(self, options);
 }
 
-pub inline fn createScene(self: *Journey) !*venture.Scene {
-    return try venture.Scene.create(self);
+pub inline fn createScene(self: *Journey, options: venture.Scene.Options) !*venture.Scene {
+    return try venture.Scene.create(self, options);
 }
 
 pub inline fn createModel(self: *Journey, mesh_builder: *const fn(journey: *venture.Journey) anyerror!venture.Mesh) !*venture.Model {

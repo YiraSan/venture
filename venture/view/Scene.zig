@@ -20,11 +20,17 @@ pub fn __render_scene(
     }
 }
 
-pub fn create(journey: *venture.Journey) !*Scene {
+pub const Options = struct {
+
+};
+
+pub fn create(journey: *venture.Journey, options: Options) !*Scene {
     const scene = try journey.allocator.create(Scene);
     scene.journey = journey;
     scene.containers = try std.ArrayListUnmanaged(*venture.Model.Container).initCapacity(scene.journey.allocator, 64);
     scene.containers_lock = .{};
+
+    _ = options;
 
     return scene;
 }
