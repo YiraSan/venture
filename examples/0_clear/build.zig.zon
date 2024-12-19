@@ -1,5 +1,5 @@
 .{
-    .name = "venture_example",
+    .name = "clear_example",
     .version = "0.0.0",
     .dependencies = .{
         .venture = .{
