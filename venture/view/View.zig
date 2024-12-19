@@ -8,7 +8,7 @@ const wgpu = @import("wgpu");
 const View = @This();
 journey: *venture.Journey,
 window: *sdl.struct_SDL_Window,
-native_view: ?*anyopaque,
+native: ?*anyopaque,
 wgpu_surface: wgpu.WGPUSurface,
 
 // this will be moved to the scene
@@ -30,7 +30,7 @@ pub const ViewOptions = struct {
 pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
     const view = try journey.allocator.create(View);
     view.journey = journey;
-    view.native_view = null;
+    view.native = null;
     view.wgpu_surface = null;
     view.render_pipeline = null;
 
@@ -54,14 +54,15 @@ pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
         return ViewError.CreationFail;
     }
 
-    if (view.journey.backend_type == .metal) {
-        view.native_view = sdl.SDL_Metal_CreateView(view.window);
-        if (view.native_view == null) {
+    const video_driver = sdl.SDL_GetCurrentVideoDriver();
+    if (view.journey.backend_type == .metal and std.mem.eql(u8, std.mem.span(video_driver), "cocoa")) {
+        view.native = sdl.SDL_Metal_CreateView(view.window);
+        if (view.native == null) {
             std.log.err("Couldn't initialize metal view: {s}", .{ sdl.SDL_GetError() });
             return ViewError.CreationFail;
         }
 
-        const metal_layer = sdl.SDL_Metal_GetLayer(view.native_view);
+        const metal_layer = sdl.SDL_Metal_GetLayer(view.native);
         if (metal_layer == null) {
             std.log.err("Couldn't initialize metal layer: {s}", .{ sdl.SDL_GetError() });
             return ViewError.CreationFail;
@@ -78,7 +79,46 @@ pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
                 }),
             }
         );
+    } else if (std.mem.eql(u8, std.mem.span(video_driver), "wayland")) {
+        // not tested
+        const wayland_display = sdl.SDL_GetPointerProperty(sdl.SDL_GetWindowProperties(window), sdl.SDL_PROP_WINDOW_WAYLAND_DISPLAY_POINTER, null);
+        const wayland_surface = sdl.SDL_GetPointerProperty(sdl.SDL_GetWindowProperties(window), sdl.SDL_PROP_WINDOW_WAYLAND_SURFACE_POINTER, null);
+        if (wayland_display == null or wayland_surface == null) {
+            @panic("fatal error, cannot get wayland pointers");
+        }
+        view.wgpu_surface = wgpu.wgpuInstanceCreateSurface(
+            view.journey.wgpu_instance,
+            &wgpu.WGPUSurfaceDescriptor {
+                .nextInChain = @ptrCast(&wgpu.struct_WGPUSurfaceDescriptorFromWaylandSurface {
+                    .chain = wgpu.WGPUChainedStruct {
+                        .sType = wgpu.WGPUSType_SurfaceDescriptorFromWaylandSurface
+                    },
+                    .display = wayland_display,
+                    .surface = wayland_surface,
+                }),
+            }
+        );
+    } else if (std.mem.eql(u8, std.mem.span(video_driver), "x11")) {
+        // not tested
+        const x11_display = sdl.SDL_GetPointerProperty(sdl.SDL_GetWindowProperties(window), sdl.SDL_PROP_WINDOW_X11_DISPLAY_POINTER, null);
+        const x11_window_number = sdl.SDL_GetNumberProperty(sdl.SDL_GetWindowProperties(window), sdl.SDL_PROP_WINDOW_X11_WINDOW_NUMBER, -1);
+        if (x11_display == null or x11_window_number == -1) {
+            @panic("fatal error, cannot get x11 display pointer");
+        }
+        view.wgpu_surface = wgpu.wgpuInstanceCreateSurface(
+            view.journey.wgpu_instance,
+            &wgpu.WGPUSurfaceDescriptor {
+                .nextInChain = @ptrCast(&wgpu.struct_WGPUSurfaceDescriptorFromXlibWindow {
+                    .chain = wgpu.WGPUChainedStruct {
+                        .sType = wgpu.WGPUSType_SurfaceDescriptorFromXlibWindow
+                    },
+                    .display = x11_display,
+                    .window = @intCast(x11_window_number),
+                }),
+            }
+        );
     } else {
+        std.log.err("unsupported video driver: {s}", .{video_driver});
         unreachable;
     }
 
@@ -299,7 +339,7 @@ pub fn hide(self: *View) ViewError!void {
 pub fn destroy(self: *View) void {
     wgpu.wgpuSurfaceRelease(self.wgpu_surface);
     if (self.journey.backend_type == .metal) {
-        sdl.SDL_Metal_DestroyView(self.native_view);
+        sdl.SDL_Metal_DestroyView(self.native);
     }
     sdl.SDL_DestroyWindow(self.window);
     self.journey.allocator.destroy(self);
