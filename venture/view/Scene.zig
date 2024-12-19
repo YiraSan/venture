@@ -2,6 +2,8 @@ const std = @import("std");
 const venture = @import("venture");
 const wgpu = @import("wgpu");
 
+pub const Camera = @import("Camera.zig");
+
 const Scene = @This();
 journey: *venture.Journey,
 containers: std.ArrayListUnmanaged(*venture.Model.Container),
