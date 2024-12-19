@@ -1,7 +1,6 @@
 //! The view is the equivalent of a window.
 
 const std = @import("std");
-const builtin = @import("builtin");
 const venture = @import("venture");
 const sdl = @import("sdl");
 const wgpu = @import("wgpu");
@@ -11,9 +10,6 @@ journey: *venture.Journey,
 window: *sdl.struct_SDL_Window,
 native_view: ?*anyopaque,
 wgpu_surface: wgpu.WGPUSurface,
-wgpu_adapter: wgpu.WGPUAdapter,
-wgpu_device: wgpu.WGPUDevice,
-wgpu_queue: wgpu.WGPUQueue,
 
 // this will be moved to the scene
 render_pipeline: wgpu.WGPURenderPipeline,
@@ -35,21 +31,20 @@ pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
     const view = try journey.allocator.create(View);
     view.journey = journey;
     view.native_view = null;
-    view.wgpu_adapter = null;
-    view.wgpu_device = null;
-    view.wgpu_queue = null;
-
+    view.wgpu_surface = null;
     view.render_pipeline = null;
 
-    const os_flag = if (comptime builtin.os.tag == .macos) 
-            sdl.SDL_WINDOW_METAL
-        else sdl.SDL_WINDOW_VULKAN;
+    const backend_flag = switch (view.journey.backend_type) {
+        .metal => sdl.SDL_WINDOW_METAL,
+        .vulkan => sdl.SDL_WINDOW_VULKAN,
+        .opengl => sdl.SDL_WINDOW_OPENGL,
+    };
 
     const window = sdl.SDL_CreateWindow(
         options.title orelse "Venture", 
         @intCast(options.width orelse 800),
         @intCast(options.height orelse 450), 
-        os_flag | sdl.SDL_WINDOW_HIDDEN,
+        backend_flag | sdl.SDL_WINDOW_HIDDEN,
     );
 
     if (window) |win| {
@@ -59,7 +54,7 @@ pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
         return ViewError.CreationFail;
     }
 
-    if (comptime builtin.os.tag == .macos) {
+    if (view.journey.backend_type == .metal) {
         view.native_view = sdl.SDL_Metal_CreateView(view.window);
         if (view.native_view == null) {
             std.log.err("Couldn't initialize metal view: {s}", .{ sdl.SDL_GetError() });
@@ -83,42 +78,12 @@ pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
                 }),
             }
         );
-        
     } else {
         unreachable;
     }
 
-    wgpu.wgpuInstanceRequestAdapter(
-        view.journey.wgpu_instance, 
-        &wgpu.WGPURequestAdapterOptions {
-            .compatibleSurface = view.wgpu_surface,
-        }, 
-        &handle_request_adapter, 
-        view
-    );
-    if (view.wgpu_adapter == null) {
-        std.log.err("wgpu adapter request failed", .{});
-        return ViewError.CreationFail;
-    }
-
-    wgpu.wgpuAdapterRequestDevice(
-        view.wgpu_adapter, 
-        null, 
-        &handle_request_device, 
-        view
-    );
-    if (view.wgpu_device == null) {
-        std.log.err("wgpu device request failed", .{});
-        return ViewError.CreationFail;
-    }
-
-    view.wgpu_queue = wgpu.wgpuDeviceGetQueue(view.wgpu_device);
-    if (view.wgpu_queue == null) {
-        std.log.err("cannot get device queue", .{});
-        return ViewError.CreationFail;
-    }
-
-    const shader_module = wgpu.wgpuDeviceCreateShaderModule(view.wgpu_device, &wgpu.WGPUShaderModuleDescriptor {
+    // shaders be moved to the journey
+    const shader_module = wgpu.wgpuDeviceCreateShaderModule(view.journey.wgpu_device, &wgpu.WGPUShaderModuleDescriptor {
         .label = "shader.wgsl",
         .nextInChain = @ptrCast(&wgpu.WGPUShaderModuleWGSLDescriptor {
             .chain = wgpu.WGPUChainedStruct {
@@ -131,9 +96,9 @@ pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
         std.log.err("cannot load shaders", .{});
         return ViewError.CreationFail;
     }
-
+    
     const pipeline_layout = wgpu.wgpuDeviceCreatePipelineLayout(
-        view.wgpu_device,
+        view.journey.wgpu_device,
         &wgpu.WGPUPipelineLayoutDescriptor {
             .label = "pipeline_layout",
         }
@@ -146,12 +111,12 @@ pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
     var surface_capabilities = wgpu.WGPUSurfaceCapabilities {};
     wgpu.wgpuSurfaceGetCapabilities(
         view.wgpu_surface, 
-        view.wgpu_adapter, 
+        view.journey.wgpu_adapter, 
         &surface_capabilities
     );
 
     view.render_pipeline = wgpu.wgpuDeviceCreateRenderPipeline(
-        view.wgpu_device,
+        view.journey.wgpu_device,
         &wgpu.WGPURenderPipelineDescriptor {
             .label = "render_pipeline",
             .layout = pipeline_layout,
@@ -178,6 +143,7 @@ pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
                 },
             },
             .primitive = wgpu.WGPUPrimitiveState {
+                .frontFace = wgpu.WGPUFrontFace_CCW,
                 .topology = wgpu.WGPUPrimitiveTopology_TriangleList,
             },
             .multisample = wgpu.WGPUMultisampleState {
@@ -192,7 +158,7 @@ pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
     }
 
     view.surface_config = wgpu.WGPUSurfaceConfiguration {
-        .device = view.wgpu_device,
+        .device = view.journey.wgpu_device,
         .usage = wgpu.WGPUTextureUsage_RenderAttachment,
         .format = surface_capabilities.formats[0],
         .presentMode = wgpu.WGPUPresentMode_Fifo,
@@ -212,26 +178,6 @@ pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
     wgpu.wgpuSurfaceConfigure(view.wgpu_surface, &view.surface_config);
 
     return view;
-}
-
-fn handle_request_adapter(
-    _: wgpu.WGPURequestAdapterStatus, 
-    adapter: wgpu.WGPUAdapter, 
-    _: [*c]const u8, 
-    userdata: ?*anyopaque
-) callconv(.c) void {
-    const self: *View = @alignCast(@ptrCast(userdata));
-    self.wgpu_adapter = adapter;
-}
-
-fn handle_request_device(
-    _: wgpu.WGPURequestDeviceStatus, 
-    device: wgpu.WGPUDevice, 
-    _: [*c]const u8, 
-    userdata: ?*anyopaque
-) callconv(.c) void {
-    const self: *View = @alignCast(@ptrCast(userdata));
-    self.wgpu_device = device;
 }
 
 pub fn render(self: *View, scene: *venture.Scene) !void {
@@ -275,7 +221,7 @@ pub fn render(self: *View, scene: *venture.Scene) !void {
     }
 
     const command_encoder = wgpu.wgpuDeviceCreateCommandEncoder(
-        self.wgpu_device, 
+        self.journey.wgpu_device, 
         &wgpu.WGPUCommandEncoderDescriptor{
             .label = "command_encoder",
         }
@@ -326,7 +272,7 @@ pub fn render(self: *View, scene: *venture.Scene) !void {
         return error.CouldntFinishEncoding;
     }
 
-    wgpu.wgpuQueueSubmit(self.wgpu_queue, 1, &[_]wgpu.WGPUCommandBuffer{command_buffer});
+    wgpu.wgpuQueueSubmit(self.journey.wgpu_queue, 1, &[_]wgpu.WGPUCommandBuffer{command_buffer});
     wgpu.wgpuSurfacePresent(self.wgpu_surface);
 
     wgpu.wgpuCommandBufferRelease(command_buffer);
@@ -351,12 +297,10 @@ pub fn hide(self: *View) ViewError!void {
 }
 
 pub fn destroy(self: *View) void {
-    wgpu.wgpuDeviceRelease(self.wgpu_device);
-    if (comptime builtin.os.tag == .macos) {
+    wgpu.wgpuSurfaceRelease(self.wgpu_surface);
+    if (self.journey.backend_type == .metal) {
         sdl.SDL_Metal_DestroyView(self.native_view);
     }
-    wgpu.wgpuAdapterRelease(self.wgpu_adapter);
-    wgpu.wgpuSurfaceRelease(self.wgpu_surface);
     sdl.SDL_DestroyWindow(self.window);
     self.journey.allocator.destroy(self);
 }
