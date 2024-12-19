@@ -20,7 +20,6 @@ pub fn __view_render(
     _ = self;
     _ = view;
     _ = render_pass_encoder;
-    // wgpu.wgpuRenderPassEncoderDraw(render_pass_encoder, 3, 1, 0, 0);
 }
 
 pub fn destroy(self: *Scene) void {
