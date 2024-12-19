@@ -21,13 +21,13 @@ pub const ViewError = error {
     HideFail,
 };
 
-pub const ViewOptions = struct {
+pub const Options = struct {
     title: ?[*c]const u8 = null,
     width: ?u32 = null,
     height: ?u32 = null,
 };
 
-pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
+pub fn create(journey: *venture.Journey, options: Options) !*View {
     const view = try journey.allocator.create(View);
     view.journey = journey;
     view.native = null;

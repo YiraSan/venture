@@ -93,7 +93,7 @@ fn handle_request_device(
     self.wgpu_device = device;
 }
 
-pub inline fn createView(self: *Journey, options: venture.View.ViewOptions) !*venture.View {
+pub inline fn createView(self: *Journey, options: venture.View.Options) !*venture.View {
     return try venture.View.create(self, options);
 }
 
