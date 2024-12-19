@@ -27,6 +27,7 @@ pub fn main() !void {
     const instance = try container.newInstance();
     _ = instance;
 
+    try view.render(scene);
     try view.show();
 
     while (true) {
