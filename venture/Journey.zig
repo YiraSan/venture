@@ -94,11 +94,15 @@ fn handle_request_device(
 }
 
 pub inline fn createView(self: *Journey, options: venture.View.ViewOptions) !*venture.View {
-    return venture.View.create(self, options);
+    return try venture.View.create(self, options);
 }
 
 pub inline fn createScene(self: *Journey) !*venture.Scene {
-    return venture.Scene.create(self);
+    return try venture.Scene.create(self);
+}
+
+pub inline fn createModel(self: *Journey, mesh_builder: *const fn(journey: *venture.Journey) anyerror!venture.Mesh) !*venture.Model {
+    return try venture.Model.create(self, try mesh_builder(self));
 }
 
 pub fn destroy(self: *Journey) void {

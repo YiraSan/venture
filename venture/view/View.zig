@@ -240,6 +240,9 @@ pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
 }
 
 pub fn render(self: *View, scene: *venture.Scene) !void {
+
+    // TODO synchronize GPU
+
     var surface_texture: wgpu.WGPUSurfaceTexture = undefined;
     wgpu.wgpuSurfaceGetCurrentTexture(self.wgpu_surface, &surface_texture);
     switch (surface_texture.status) {
@@ -316,7 +319,7 @@ pub fn render(self: *View, scene: *venture.Scene) !void {
 
     wgpu.wgpuRenderPassEncoderSetPipeline(render_pass_encoder, self.render_pipeline);
 
-    try venture.Scene.__render_scene(scene, self, render_pass_encoder);
+    try venture.Scene.__render_scene(scene, render_pass_encoder);
 
     wgpu.wgpuRenderPassEncoderEnd(render_pass_encoder);
     wgpu.wgpuRenderPassEncoderRelease(render_pass_encoder);

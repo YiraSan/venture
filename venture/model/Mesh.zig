@@ -6,15 +6,22 @@ const Mesh = @This();
 vertices: []Vertex,
 indices: []u16,
 
-pub fn triangle() Mesh {
+pub fn triangle(journey: *venture.Journey) !Mesh {
+    const vertices = try journey.allocator.dupe(Vertex, &[_] Vertex {
+        Vertex { .position = .{ -1.0, -1.0, 0.0, 1.0 }, .color = .{ 1.0, 1.0, 0.0, 1.0 } },
+        Vertex { .position = .{  1.0, -1.0, 0.0, 1.0 }, .color = .{ 0.0, 1.0, 0.0, 1.0 } },
+        Vertex { .position = .{  0.0,  1.0, 0.0, 1.0 }, .color = .{ 1.0, 0.0, 0.0, 1.0 } },
+    });
+    const indices = try journey.allocator.dupe(u16, &[_] u16 { 0, 1, 2 });
     return Mesh {
-        .vertices = &[_] Vertex {
-            Vertex { .position = .{ -1.0, -1.0, 0.0, 1.0 }, .color = .{ 1.0, 1.0, 0.0, 1.0 } },
-            Vertex { .position = .{  1.0, -1.0, 0.0, 1.0 }, .color = .{ 0.0, 1.0, 0.0, 1.0 } },
-            Vertex { .position = .{  0.0,  1.0, 0.0, 1.0 }, .color = .{ 1.0, 0.0, 0.0, 1.0 } },
-        },
-        .indices = &[_] u16 { 0, 1, 2 }
+        .vertices = vertices,
+        .indices = indices,
     };
+}
+
+pub fn deinit(self: *Mesh, journey: *venture.Journey) void {
+    journey.allocator.free(self.vertices);
+    journey.allocator.free(self.indices);
 }
 
 pub const Vertex = packed struct(u256) { // 16 + 16 = 256
