@@ -16,7 +16,7 @@ pub fn main() !void {
     const view = try journey.createView(.{});
     defer view.destroy(); 
     
-    const scene = try journey.createScene();
+    const scene = try journey.createScene(.{});
     defer scene.destroy();
 
     const model = try journey.createModel(venture.Mesh.triangle);
