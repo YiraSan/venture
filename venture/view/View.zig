@@ -158,6 +158,13 @@ pub fn create(journey: *venture.Journey, options: ViewOptions) !*View {
             .vertex = wgpu.WGPUVertexState {
                 .module = shader_module,
                 .entryPoint = "vs_main",
+                .bufferCount = 1,
+                .buffers = &wgpu.WGPUVertexBufferLayout {
+                    .arrayStride = @sizeOf(venture.Mesh.Vertex),
+                    .stepMode = wgpu.WGPUVertexStepMode_Vertex,
+                    .attributeCount = venture.Mesh.vertex_attributes.len,
+                    .attributes = venture.Mesh.vertex_attributes,
+                },
             },
             .fragment = &wgpu.WGPUFragmentState {
                 .module = shader_module,

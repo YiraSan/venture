@@ -2,6 +2,9 @@ pub const Journey = @import("Journey.zig");
 pub const View = @import("view/View.zig");
 pub const Scene = @import("view/Scene.zig");
 
+pub const Mesh = @import("model/Mesh.zig");
+pub const Model = @import("model/Model.zig");
+
 // init / deinit
 
 const std = @import("std");
