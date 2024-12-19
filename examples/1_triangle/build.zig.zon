@@ -1,0 +1,10 @@
+.{
+    .name = "triangle_example",
+    .version = "0.0.0",
+    .dependencies = .{
+        .venture = .{
+            .path = "../../"
+        }
+    },
+    .paths = .{ "." },
+}
