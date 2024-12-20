@@ -33,6 +33,11 @@
             .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-linux-aarch64-release.zip",
             .hash = "1220e329ad53c8d971babf4555aee332595d5a26154e43bbc7e7c6a90bf3b7c4d73a"
         },
+
+        .zmath = .{
+            .url = "https://github.com/foxnne/zmath/archive/9620a611a8c039711dc780bf296d8dc100d16d3a.tar.gz",
+            .hash = "12201b9f28adb918c2ffaf75b57a4b714a864038f8ba3e2d9f730187d0a852b952e1"
+        },
     },
 
     .paths = .{ "build.zig", "build.zig.zon", "venture", "libventure", "license" },

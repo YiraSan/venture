@@ -12,6 +12,8 @@ pub fn build(b: *std.Build) !void {
     });
     venture.addImport("venture", venture);
 
+    venture.addImport("zmath", b.dependency("zmath", .{}).module("root"));
+
     // sdl3 build static library
 
     switch (target.result.os.tag) {
