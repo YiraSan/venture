@@ -53,7 +53,8 @@ pub fn setVisibility(self: *Window, visible: bool) !void {
 }
 
 pub fn isVisible(self: *Window) bool {
-    return sdl.SDL_GetBooleanProperty(sdl.SDL_GetWindowProperties(self.sdl_window), sdl.SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, false);
+    const flags = sdl.SDL_GetWindowFlags(self.sdl_window);
+    return !(flags & sdl.SDL_WINDOW_HIDDEN == sdl.SDL_WINDOW_HIDDEN);
 }
 
 pub fn show(self: *Window) !void {
