@@ -13,7 +13,7 @@ pub fn create(allocator: std.mem.Allocator) !*Journey {
     journey.allocator = allocator;
 
     if (sdl.SDL_CreateGPUDevice(
-        sdl.SDL_GPU_SHADERFORMAT_SPIRV | sdl.SDL_GPU_SHADERFORMAT_METALLIB | sdl.SDL_GPU_SHADERFORMAT_DXIL,
+        sdl.SDL_GPU_SHADERFORMAT_SPIRV | sdl.SDL_GPU_SHADERFORMAT_MSL,
         comptime builtin.mode == .Debug, null)
     ) |gpu_device| {
         journey.gpu_device = gpu_device;
