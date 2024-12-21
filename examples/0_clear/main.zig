@@ -16,7 +16,9 @@ pub fn main() !void {
     const window = try journey.createWindow(.{ .show_at_creation = true });
     defer window.destroy();
 
-    const view = try journey.createView(.{});
+    const view = try journey.createView(.{
+        .target = window.target(),
+    });
     defer view.destroy();
 
     while (true) {
@@ -25,6 +27,13 @@ pub fn main() !void {
                 break;
             },
         };
+        
+        view.setClearColor(.{
+            .r = (@sin(@as(f32, @floatFromInt(journey.getTick()))/60.0)+1.0)/2.0,
+            .g = (@cos(@as(f32, @floatFromInt(journey.getTick()))/60.0)+1.0)/2.0,
+            .b = (@sin(@as(f32, @floatFromInt(journey.getTick()))/60.0)+1.0)/2.0,
+            .a = 1.0
+        });
 
         try view.render();
     }
