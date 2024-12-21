@@ -77,6 +77,12 @@ pub fn getTitle(self: *Window) []const u8 {
     return std.mem.span(sdl.SDL_GetWindowTitle(self.sdl_window));
 }
 
+pub fn target(self: *Window) venture.render.View.Target {
+    return venture.render.View.Target {
+        .window = self
+    };
+}
+
 pub fn destroy(self: *Window) void {
     sdl.SDL_ReleaseWindowFromGPUDevice(self.journey.gpu_device, self.sdl_window);
     sdl.SDL_DestroyWindow(self.sdl_window);
