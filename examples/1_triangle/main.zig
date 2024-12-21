@@ -10,34 +10,38 @@ pub fn main() !void {
     defer std.debug.assert(gpa.deinit() == .ok);
     const allocator = if (builtin.mode == .Debug or builtin.mode == .ReleaseSafe) gpa.allocator() else std.heap.c_allocator;
 
-    const journey = try venture.Journey.create(allocator);
+    const journey = try venture.core.Journey.create(allocator);
     defer journey.destroy();
 
-    const view = try journey.createView(.{});
-    defer view.destroy(); 
-    
+    const window = try journey.createWindow(.{ .show_at_creation = true });
+    defer window.destroy();
+
     const scene = try journey.createScene(.{});
     defer scene.destroy();
 
-    const model = try journey.createModel(venture.Mesh.triangle);
+    const view = try journey.createView(.{ 
+        .target = window.target(),
+        .scene = scene
+    });
+    defer view.destroy();
+
+    const model = try journey.createModel(venture.model.Mesh.triangle);
     defer model.destroy();
 
     const container = try model.bindTo(scene);
+    defer container.destroy();
 
-    const instance = try container.newInstance();
-    _ = instance;
-
-    try view.render(scene);
-    try view.show();
+    const instance = try container.createInstance();
+    defer instance.destroy();
 
     while (true) {
-        defer venture.delay(15);
-        switch (try venture.pollEvent()) {
-            .Quit => {
+        if (venture.poll()) |event| switch (event) {
+            .quit => {
                 break;
             },
             else => {}
-        }
-        try view.render(scene);
+        };
+
+        try view.render();
     }
 }
