@@ -73,6 +73,10 @@ pub fn setTitle(self: *Window, title: []const u8) !void {
     }
 }
 
+pub fn getTitle(self: *Window) []const u8 {
+    return std.mem.span(sdl.SDL_GetWindowTitle(self.sdl_window));
+}
+
 pub fn destroy(self: *Window) void {
     sdl.SDL_ReleaseWindowFromGPUDevice(self.journey.gpu_device, self.sdl_window);
     sdl.SDL_DestroyWindow(self.sdl_window);
