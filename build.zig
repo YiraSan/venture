@@ -30,15 +30,6 @@ pub fn build(b: *std.Build) !void {
             });
             sdl_header.addIncludePath(sdl3.path("x86_64-w64-mingw32\\include"));
             venture.addImport("sdl", sdl_header.createModule());
-
-            const sdl_vulkan_header = b.addTranslateC(.{
-                .root_source_file = sdl3.path("x86_64-w64-mingw32\\include\\SDL3\\SDL_vulkan.h"),
-                .target = target,
-                .optimize = optimize,
-                .use_clang = true,
-            });
-            sdl_vulkan_header.addIncludePath(sdl3.path("x86_64-w64-mingw32\\include"));
-            venture.addImport("sdl_vulkan", sdl_vulkan_header.createModule());
         },
         else => {
             const sdl3 = b.dependency("sdl3", .{});
@@ -69,15 +60,6 @@ pub fn build(b: *std.Build) !void {
             });
             sdl_header.addIncludePath(sdl3.path("include"));
             venture.addImport("sdl", sdl_header.createModule());
-
-            const sdl_vulkan_header = b.addTranslateC(.{
-                .root_source_file = sdl3.path("include/SDL3/SDL_vulkan.h"),
-                .target = target,
-                .optimize = optimize,
-                .use_clang = true,
-            });
-            sdl_vulkan_header.addIncludePath(sdl3.path("include"));
-            venture.addImport("sdl_vulkan", sdl_vulkan_header.createModule());
         },
     }
 
@@ -122,46 +104,6 @@ pub fn build(b: *std.Build) !void {
         },
         else => {},
     }
-
-    // wgpu
-
-    const wgpu = switch (target.result.os.tag) {
-        .windows => switch (target.result.cpu.arch) {
-            .x86_64 => b.dependency("wgpu_windows_x64", .{}),
-            else => @panic("unsupported cpu")
-        },
-        .macos => switch (target.result.cpu.arch) {
-            .x86_64 => b.dependency("wgpu_macos_x64", .{}),
-            .aarch64 => b.dependency("wgpu_macos_aarch64", .{}),
-            else => @panic("unsupported cpu")
-        },
-        .linux => switch (target.result.cpu.arch) {
-            .x86_64 => b.dependency("wgpu_linux_x64", .{}),
-            .aarch64 => b.dependency("wgpu_linux_aarch64", .{}),
-            else => @panic("unsupported cpu")
-        },
-        else => @panic("unsupported os")
-    };
-
-    venture.addObjectFile(wgpu.path("lib/libwgpu_native.a"));
-
-    const webgpu_header = b.addTranslateC(.{
-        .root_source_file = wgpu.path("include/webgpu/webgpu.h"),
-        .target = target,
-        .optimize = optimize,
-        .use_clang = true,
-    });
-    webgpu_header.addIncludePath(wgpu.path("include/wgpu/"));
-    venture.addImport("webgpu", webgpu_header.createModule());
-
-    const wgpu_header = b.addTranslateC(.{
-        .root_source_file = wgpu.path("include/wgpu/wgpu.h"),
-        .target = target,
-        .optimize = optimize,
-        .use_clang = true,
-    });
-    wgpu_header.addIncludePath(wgpu.path("include/webgpu/"));
-    venture.addImport("wgpu", wgpu_header.createModule());
 
     // C Static Library
 

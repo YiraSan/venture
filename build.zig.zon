@@ -12,27 +12,6 @@
             .url = "https://github.com/libsdl-org/SDL/releases/download/preview-3.1.3/SDL3-devel-3.1.3-mingw.zip",
             .hash = "1220386ed0b3d87c0f6d7710e20b1ccbd7bf1744e15f929f4bcb4d21bb3bcf31960a"
         },
-        
-        .wgpu_windows_x64 = .{
-            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-windows-x86_64-gnu-release.zip",
-            .hash = "1220245eaf64beab185bdd1b52cb7cedd8d0b7f1d545e41f67325dd32e562fee0380"
-        },
-        .wgpu_macos_x64 = .{
-            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-macos-x86_64-release.zip",
-            .hash = "1220fe8168bcc47892ef649c2a525635ec9fd932ac2998d5503d38cc552c4cd89698"
-        },
-        .wgpu_linux_x64 = .{
-            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-linux-x86_64-release.zip",
-            .hash = "12202d55660b2b66a8cf0ae68cb5ac294e93b9b048099f77f5f09987c61091a579a8"
-        },
-        .wgpu_macos_aarch64 = .{
-            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-macos-aarch64-release.zip",
-            .hash = "1220aa5c0ca2feb2ec5159623b4a50e0ab33add2eee329ffd922773e3952f4e46568"
-        },
-        .wgpu_linux_aarch64 = .{
-            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-linux-aarch64-release.zip",
-            .hash = "1220e329ad53c8d971babf4555aee332595d5a26154e43bbc7e7c6a90bf3b7c4d73a"
-        },
 
         .zmath = .{
             .url = "https://github.com/foxnne/zmath/archive/9620a611a8c039711dc780bf296d8dc100d16d3a.tar.gz",
