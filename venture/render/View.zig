@@ -212,6 +212,14 @@ pub fn render(self: *View) !void {
             },
         }
 
+        if (self.scene) |scene| {
+            const copy_pass = sdl.SDL_BeginGPUCopyPass(command_buffer);
+
+            try scene.__remap(copy_pass);
+
+            sdl.SDL_EndGPUCopyPass(copy_pass);
+        }
+
         const render_pass = sdl.SDL_BeginGPURenderPass(
             command_buffer, 
             &sdl.SDL_GPUColorTargetInfo {
@@ -234,8 +242,12 @@ pub fn render(self: *View) !void {
             null
         );
 
+        sdl.SDL_BindGPUGraphicsPipeline(render_pass, self.graphics_pipeline);
+
+        // TODO set camera buffers
+
         if (self.scene) |scene| {
-            _ = scene;
+            try scene.__render(render_pass);
         }
 
         sdl.SDL_EndGPURenderPass(render_pass);

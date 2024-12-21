@@ -3,7 +3,12 @@ pub const core = struct {
     pub const Window = @import("core/Window.zig");
 };
 
-pub const model = struct {};
+pub const model = struct {
+    pub const Container = @import("model/Container.zig");
+    pub const Instance = @import("model/Instance.zig");
+    pub const Mesh = @import("model/Mesh.zig");
+    pub const Model = @import("model/Model.zig");
+};
 
 pub const render = struct {
     pub const Scene = @import("render/Scene.zig");
@@ -58,8 +63,6 @@ pub fn poll() ?Event {
     if (!sdl.SDL_PollEvent(&event)) {
         return null;
     }
-
-    std.log.debug("{}", .{event.type});
 
     return switch (event.type) {
         sdl.SDL_EVENT_WINDOW_MOVED => Event { .window_moved = event.window.windowID },

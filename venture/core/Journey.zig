@@ -51,3 +51,7 @@ pub inline fn createView(self: *Journey, options: venture.render.View.Options) !
 pub inline fn createScene(self: *Journey, options: venture.render.Scene.Options) !*venture.render.Scene {
     return try venture.render.Scene.create(self, options);
 }
+
+pub inline fn createModel(self: *Journey, mesh: *const fn(journey: *venture.core.Journey) anyerror!venture.model.Mesh) !*venture.model.Model {
+    return try venture.model.Model.create(self, try mesh(self));
+}
