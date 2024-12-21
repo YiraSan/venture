@@ -10,25 +10,22 @@ pub fn main() !void {
     defer std.debug.assert(gpa.deinit() == .ok);
     const allocator = if (builtin.mode == .Debug or builtin.mode == .ReleaseSafe) gpa.allocator() else std.heap.c_allocator;
 
-    const journey = try venture.Journey.create(allocator);
+    const journey = try venture.core.Journey.create(allocator);
     defer journey.destroy();
 
+    const window = try journey.createWindow(.{ .show_at_creation = true });
+    defer window.destroy();
+
     const view = try journey.createView(.{});
-    defer view.destroy(); 
-
-    const scene = try journey.createScene();
-    defer scene.destroy();
-
-    try view.show();
+    defer view.destroy();
 
     while (true) {
-        defer venture.delay(15);
-        switch (try venture.pollEvent()) {
+        if (venture.poll()) |event| switch (event) {
             .Quit => {
                 break;
             },
-            else => {}
-        }
-        try view.render(scene);
+        };
+
+        try view.render();
     }
 }
