@@ -77,6 +77,22 @@ pub fn getTitle(self: *Window) []const u8 {
     return std.mem.span(sdl.SDL_GetWindowTitle(self.sdl_window));
 }
 
+pub fn getId(self: *Window) u32 {
+    return sdl.SDL_GetWindowID(self.sdl_window);
+}
+
+pub fn getWidth(self: *Window) u32 {
+    var width: c_int = undefined;
+    _ = sdl.SDL_GetWindowSizeInPixels(self.sdl_window, &width, null);
+    return @intCast(width);
+}
+
+pub fn getHeight(self: *Window) u32 {
+    var height: c_int = undefined;
+    _ = sdl.SDL_GetWindowSizeInPixels(self.sdl_window, null, &height);
+    return @intCast(height);
+}
+
 pub fn target(self: *Window) venture.render.View.Target {
     return venture.render.View.Target {
         .window = self

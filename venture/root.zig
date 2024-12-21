@@ -3,9 +3,7 @@ pub const core = struct {
     pub const Window = @import("core/Window.zig");
 };
 
-pub const model = struct {
-    
-};
+pub const model = struct {};
 
 pub const render = struct {
     pub const Scene = @import("render/Scene.zig");
@@ -28,7 +26,31 @@ pub fn deinit() void {
 }
 
 pub const Event = union(enum) {
-    Quit,
+    /// `window_id`: u32.
+    /// Obtainable from `window.getId()`
+    window_moved: u32,
+    /// `window_id`: u32.
+    /// Obtainable from `window.getId()`
+    window_resized: u32,
+    /// `window_id`: u32.
+    /// Obtainable from `window.getId()`
+    window_mouse_enter: u32,
+    /// `window_id`: u32.
+    /// Obtainable from `window.getId()`
+    window_mouse_leave: u32,
+    /// `window_id`: u32.
+    /// Obtainable from `window.getId()`
+    window_exposed: u32,
+    /// `window_id`: u32.
+    /// Obtainable from `window.getId()`
+    window_occluded: u32,
+    /// This event is only triggered if there are multiple windows.
+    /// With one window, .quit is triggered.
+    ///
+    /// `window_id`: u32.
+    /// Obtainable from `window.getId()`
+    window_close_request: u32,
+    quit,
 };
 
 pub fn poll() ?Event {
@@ -37,8 +59,18 @@ pub fn poll() ?Event {
         return null;
     }
 
+    std.log.debug("{}", .{event.type});
+
     return switch (event.type) {
-        sdl.SDL_EVENT_QUIT => Event.Quit,
+        sdl.SDL_EVENT_WINDOW_MOVED => Event { .window_moved = event.window.windowID },
+        sdl.SDL_EVENT_WINDOW_RESIZED => Event { .window_resized = event.window.windowID },
+        sdl.SDL_EVENT_WINDOW_MOUSE_ENTER => Event { .window_mouse_enter = event.window.windowID },
+        sdl.SDL_EVENT_WINDOW_MOUSE_LEAVE => Event { .window_mouse_leave = event.window.windowID },
+        sdl.SDL_EVENT_WINDOW_EXPOSED => Event { .window_exposed = event.window.windowID },
+        sdl.SDL_EVENT_WINDOW_OCCLUDED => Event { .window_occluded = event.window.windowID },
+        sdl.SDL_EVENT_WINDOW_CLOSE_REQUESTED => Event { .window_close_request = event.window.windowID },
+
+        sdl.SDL_EVENT_QUIT => Event.quit,
         else => null,
     };
 }

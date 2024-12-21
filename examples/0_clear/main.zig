@@ -23,9 +23,10 @@ pub fn main() !void {
 
     while (true) {
         if (venture.poll()) |event| switch (event) {
-            .Quit => {
+            .quit => {
                 break;
             },
+            else => {},
         };
         
         view.setClearColor(.{
