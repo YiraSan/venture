@@ -31,12 +31,12 @@ pub fn destroy(self: *Journey) void {
 
 // shortcuts
 
-pub inline fn createWindow(self: *Journey, options: venture.viewport.Window.Options) !*venture.viewport.Window {
-    return try venture.viewport.Window.create(self, options);
+pub inline fn createWindow(self: *Journey, options: venture.core.Window.Options) !*venture.core.Window {
+    return try venture.core.Window.create(self, options);
 }
 
-pub inline fn createView(self: *Journey, options: venture.viewport.View.Options) !*venture.viewport.View {
-    return try venture.viewport.View.create(self, options);
+pub inline fn createView(self: *Journey, options: venture.render.View.Options) !*venture.render.View {
+    return try venture.render.View.create(self, options);
 }
 
 pub inline fn createScene(self: *Journey, options: venture.render.Scene.Options) !*venture.render.Scene {

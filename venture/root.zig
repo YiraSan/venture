@@ -1,5 +1,6 @@
 pub const core = struct {
     pub const Journey = @import("core/Journey.zig");
+    pub const Window = @import("core/Window.zig");
 };
 
 pub const model = struct {
@@ -8,11 +9,7 @@ pub const model = struct {
 
 pub const render = struct {
     pub const Scene = @import("render/Scene.zig");
-};
-
-pub const viewport = struct {
-    pub const View = @import("viewport/View.zig");
-    pub const Window = @import("viewport/Window.zig");
+    pub const View = @import("render/View.zig");
 };
 
 // ... //
