@@ -5,12 +5,15 @@ const sdl = @import("sdl");
 
 const Journey = @This();
 allocator: std.mem.Allocator,
+timer: std.time.Timer,
 
 gpu_device: *sdl.SDL_GPUDevice,
 
 pub fn create(allocator: std.mem.Allocator) !*Journey {
     const journey = try allocator.create(Journey);
     journey.allocator = allocator;
+
+    journey.timer = try std.time.Timer.start();
 
     if (sdl.SDL_CreateGPUDevice(
         sdl.SDL_GPU_SHADERFORMAT_SPIRV | sdl.SDL_GPU_SHADERFORMAT_MSL,
@@ -22,6 +25,12 @@ pub fn create(allocator: std.mem.Allocator) !*Journey {
     }
 
     return journey;
+}
+
+pub fn getTick(self: *Journey) u64 {
+    const tick_length: f64 = comptime @as(f64, @floatFromInt(std.time.ns_per_s)) / 60.0;
+    const current: f64 = @floatFromInt(self.timer.read());
+    return @intFromFloat(current / tick_length);
 }
 
 pub fn destroy(self: *Journey) void {
