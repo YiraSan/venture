@@ -57,7 +57,26 @@ pub fn __remap(self: *Container, copy_pass: ?*sdl.SDL_GPUCopyPass) !void {
         self.remap_instances = false;
 
         if (self.raw_instances.items.len > self.instance_buffer_capacity) {
-            // TODO resize
+            sdl.SDL_ReleaseGPUBuffer(self.scene.journey.gpu_device, self.instance_buffer);
+            sdl.SDL_ReleaseGPUTransferBuffer(self.scene.journey.gpu_device, self.transfer_buffer);
+
+            self.instance_buffer_capacity = self.raw_instances.items.len + self.raw_instances.items.len % 64;
+
+            self.instance_buffer = sdl.SDL_CreateGPUBuffer(
+                self.scene.journey.gpu_device,
+                @ptrCast(&sdl.SDL_GPUBufferCreateInfo {
+                    .usage = sdl.SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+                    .size = @intCast(@sizeOf(venture.model.Instance.Raw) * self.instance_buffer_capacity),
+                })
+            );
+
+            self.transfer_buffer = sdl.SDL_CreateGPUTransferBuffer(
+                self.scene.journey.gpu_device,
+                @ptrCast(&sdl.SDL_GPUBufferCreateInfo {
+                    .usage = sdl.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+                    .size = @intCast(@sizeOf(venture.model.Instance.Raw) * self.instance_buffer_capacity),
+                })
+            );
         }
 
         const buffer: [*]venture.model.Instance.Raw = @alignCast(@ptrCast(sdl.SDL_MapGPUTransferBuffer(
