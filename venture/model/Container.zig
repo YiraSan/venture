@@ -13,6 +13,8 @@ remap_instances: bool,
 instance_buffer: ?*sdl.SDL_GPUBuffer,
 instance_buffer_capacity: usize,
 
+transfer_buffer: ?*sdl.SDL_GPUTransferBuffer,
+
 const Instances = std.ArrayListUnmanaged(*venture.model.Instance);
 const RawInstances = std.ArrayListUnmanaged(venture.model.Instance.Raw);
 
@@ -32,6 +34,15 @@ pub fn create(model: *venture.model.Model, scene: *venture.render.Scene) !*Conta
             .size = @sizeOf(venture.model.Instance.Raw) * 64,
         })
     );
+
+    container.transfer_buffer = sdl.SDL_CreateGPUTransferBuffer(
+        container.scene.journey.gpu_device,
+        @ptrCast(&sdl.SDL_GPUBufferCreateInfo {
+            .usage = sdl.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = @sizeOf(venture.model.Instance.Raw) * 64,
+        })
+    );
+
     container.instance_buffer_capacity = 64;
 
     try container.scene.containers.append(container.scene.journey.allocator, container);
@@ -43,13 +54,45 @@ pub fn __remap(self: *Container, copy_pass: ?*sdl.SDL_GPUCopyPass) !void {
     if (self.remap_instances) {
         self.remap_instances = false;
 
+        if (self.raw_instances.items.len > self.instance_buffer_capacity) {
+            // TODO resize
+        }
 
+        const buffer: [*]venture.model.Instance.Raw = @alignCast(@ptrCast(sdl.SDL_MapGPUTransferBuffer(
+            self.scene.journey.gpu_device,
+            self.transfer_buffer,
+            false
+        )));
+
+        @memcpy(buffer[0..self.raw_instances.items.len], self.raw_instances.items);
+
+        sdl.SDL_UnmapGPUTransferBuffer(self.scene.journey.gpu_device, self.transfer_buffer);
+
+        sdl.SDL_UploadToGPUBuffer(
+            copy_pass,
+            &sdl.SDL_GPUTransferBufferLocation {
+                .transfer_buffer = self.transfer_buffer,
+                .offset = 0
+            },
+            &sdl.SDL_GPUBufferRegion {
+                .buffer = self.instance_buffer,
+                .offset = 0,
+                .size = @intCast(self.raw_instances.items.len * @sizeOf(venture.model.Instance.Raw)),
+            },
+            false
+        );
     }
-    _ = copy_pass;
 }
 
 pub fn __render(self: *Container, render_pass: ?*sdl.SDL_GPURenderPass) !void {
     try self.model.__setup(render_pass);
+
+    sdl.SDL_BindGPUVertexStorageBuffers(
+        render_pass, 
+        0,
+        &self.instance_buffer, 
+        1
+    );
 
     sdl.SDL_DrawGPUIndexedPrimitives(
         render_pass,
@@ -62,6 +105,8 @@ pub fn __render(self: *Container, render_pass: ?*sdl.SDL_GPURenderPass) !void {
 }
 
 pub fn destroy(self: *Container) void {
+    sdl.SDL_ReleaseGPUBuffer(self.scene.journey.gpu_device, self.instance_buffer);
+    sdl.SDL_ReleaseGPUTransferBuffer(self.scene.journey.gpu_device, self.transfer_buffer);
     self.instances.deinit(self.scene.journey.allocator);
     self.raw_instances.deinit(self.scene.journey.allocator);
     self.scene.journey.allocator.destroy(self);

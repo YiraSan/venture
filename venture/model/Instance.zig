@@ -7,20 +7,57 @@ const Instance = @This();
 container: *venture.model.Container,
 index: usize,
 
+coordinate: @Vector(3, f32),
+rotation: @Vector(3, f32),
+
 pub fn create(container: *venture.model.Container) !*Instance {
     const instance = try container.scene.journey.allocator.create(Instance);
     instance.container = container;
     instance.index = container.instances.items.len;
 
+    instance.coordinate = .{ 0.0, 0.0, 0.0 };
+    instance.rotation = .{ 0.0, 0.0, 0.0 };
+
     try container.instances.append(instance.container.scene.journey.allocator, instance);
+    try container.raw_instances.append(instance.container.scene.journey.allocator, Raw { .model = zmath.identity() });
+
+    container.remap_instances = true;
 
     return instance;
+}
+
+pub fn update(self: *Instance) void {
+    var rotation_matrix = zmath.rotationZ(self.rotation[2]);
+    rotation_matrix = zmath.mul(rotation_matrix, zmath.rotationY(self.rotation[1]));
+    rotation_matrix = zmath.mul(rotation_matrix, zmath.rotationX(self.rotation[0]));
+
+    const translation_matrix = zmath.translation(
+        self.coordinate[0], 
+        self.coordinate[1], 
+        self.coordinate[2]);
+
+    self.container.raw_instances.items[self.index] = .{ 
+        .model = zmath.mul(translation_matrix, rotation_matrix),
+    };
+    self.container.remap_instances = true;
+}
+
+pub fn setCoordinate(self: *Instance, x: ?f32, y: ?f32, z: ?f32) void {
+    if (x) |c| self.coordinate[0] = c;
+    if (y) |c| self.coordinate[1] = c;
+    if (z) |c| self.coordinate[2] = c;
+}
+
+pub fn setRotation(self: *Instance, x: ?f32, y: ?f32, z: ?f32) void {
+    if (x) |c| self.rotation[0] = c;
+    if (y) |c| self.rotation[1] = c;
+    if (z) |c| self.rotation[2] = c;
 }
 
 pub fn destroy(self: *Instance) void {
     self.container.scene.journey.allocator.destroy(self);
 }
 
-pub const Raw = extern struct {
-    view_projection: zmath.Mat,
+pub const Raw = struct {
+    model: zmath.Mat
 };
