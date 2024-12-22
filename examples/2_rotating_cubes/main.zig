@@ -48,7 +48,7 @@ pub fn main() !void {
     }
     defer {
         for (0..20) |i| {
-            container.items[0].instances.items[i].destroy();
+            container.instances.items[i].destroy();
         }
     }
     
