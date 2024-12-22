@@ -182,7 +182,7 @@ pub fn setTarget(self: *View, target: ?Target) !void {
                 .height = 480,
                 .layer_count_or_depth = 1,
                 .num_levels = 1,
-                .sample_count = 1,
+                .sample_count = 0,
                 .usage = sdl.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
                 .props = 0,
             }
@@ -333,6 +333,7 @@ pub fn setRotation(self: *View, x: ?f32, y: ?f32, z: ?f32) void {
 }
 
 pub fn destroy(self: *View) void {
+    sdl.SDL_ReleaseGPUTexture(self.journey.gpu_device, self.depth_texture);
     if (self.target) |_| {
         sdl.SDL_ReleaseGPUGraphicsPipeline(self.journey.gpu_device, self.graphics_pipeline);
     }

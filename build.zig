@@ -78,6 +78,7 @@ pub fn build(b: *std.Build) !void {
             venture.linkSystemLibrary("userenv", .{});
             venture.linkSystemLibrary("unwind", .{});
             venture.linkSystemLibrary("winmm", .{});
+            venture.addObjectFile(b.path("vulkan-1.lib"));
         },
         .macos => {
             venture.linkFramework("Foundation", .{});

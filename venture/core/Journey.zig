@@ -29,7 +29,7 @@ pub fn create(allocator: std.mem.Allocator) !*Journey {
 
     journey.vertex_shader = try journey.loadShader(
         "shader",
-        "vsMain", 
+        "vs_main", 
         sdl.SDL_GPU_SHADERSTAGE_VERTEX, 
         0, 
         1, 
@@ -38,7 +38,7 @@ pub fn create(allocator: std.mem.Allocator) !*Journey {
 
     journey.fragment_shader = try journey.loadShader(
         "shader",
-        "fsMain", 
+        "fs_main", 
         sdl.SDL_GPU_SHADERSTAGE_FRAGMENT, 
         0, 
         0, 
@@ -98,18 +98,10 @@ fn loadShader(
     var code_format = sdl.SDL_GPU_SHADERFORMAT_INVALID;
     
     if (shaderFormats & sdl.SDL_GPU_SHADERFORMAT_SPIRV == sdl.SDL_GPU_SHADERFORMAT_SPIRV) {
-		if (stage == sdl.SDL_GPU_SHADERSTAGE_VERTEX) {
-            code = @embedFile("../shaders/compiled/" ++ file_name ++ ".vert.spv");
-        } else if (stage == sdl.SDL_GPU_SHADERSTAGE_FRAGMENT) {
-            code = @embedFile("../shaders/compiled/" ++ file_name ++ ".frag.spv");
-        } else @panic("unknown stage");
+		code = @embedFile("../shaders/" ++ file_name ++ ".spv");
         code_format = sdl.SDL_GPU_SHADERFORMAT_SPIRV;
 	} else if (shaderFormats & sdl.SDL_GPU_SHADERFORMAT_MSL == sdl.SDL_GPU_SHADERFORMAT_MSL) {
-		if (stage == sdl.SDL_GPU_SHADERSTAGE_VERTEX) {
-            code = @embedFile("../shaders/compiled/" ++ file_name ++ ".vert.metal");
-        } else if (stage == sdl.SDL_GPU_SHADERSTAGE_FRAGMENT) {
-            code = @embedFile("../shaders/compiled/" ++ file_name ++ ".frag.metal");
-        } else @panic("unknown stage");
+		code = @embedFile("../shaders/" ++ file_name ++ ".metal");
         code_format = sdl.SDL_GPU_SHADERFORMAT_MSL;
 	} else {
         @panic("no supported shader format");
