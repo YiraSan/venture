@@ -19,7 +19,7 @@ pub fn create(allocator: std.mem.Allocator) !*Journey {
     journey.timer = try std.time.Timer.start();
 
     if (sdl.SDL_CreateGPUDevice(
-        sdl.SDL_GPU_SHADERFORMAT_SPIRV | sdl.SDL_GPU_SHADERFORMAT_MSL,
+        sdl.SDL_GPU_SHADERFORMAT_SPIRV | sdl.SDL_GPU_SHADERFORMAT_MSL, // | sdl.SDL_GPU_SHADERFORMAT_DXBC | sdl.SDL_GPU_SHADERFORMAT_DXIL
         comptime builtin.mode == .Debug, null)
     ) |gpu_device| {
         journey.gpu_device = gpu_device;
@@ -28,7 +28,8 @@ pub fn create(allocator: std.mem.Allocator) !*Journey {
     }
 
     journey.vertex_shader = try journey.loadShader(
-        "vs_main", 
+        "shader",
+        "vsMain", 
         sdl.SDL_GPU_SHADERSTAGE_VERTEX, 
         0, 
         1, 
@@ -36,7 +37,8 @@ pub fn create(allocator: std.mem.Allocator) !*Journey {
         1);
 
     journey.fragment_shader = try journey.loadShader(
-        "fs_main", 
+        "shader",
+        "fsMain", 
         sdl.SDL_GPU_SHADERSTAGE_FRAGMENT, 
         0, 
         0, 
@@ -81,6 +83,7 @@ pub inline fn createModel(self: *Journey, mesh: *const fn(journey: *venture.core
 
 fn loadShader(
     self: *Journey,
+    comptime file_name: []const u8,
     entrypoint: []const u8,
     stage: sdl.SDL_GPUShaderStage,
     num_samplers: u32,
@@ -95,10 +98,18 @@ fn loadShader(
     var code_format = sdl.SDL_GPU_SHADERFORMAT_INVALID;
     
     if (shaderFormats & sdl.SDL_GPU_SHADERFORMAT_SPIRV == sdl.SDL_GPU_SHADERFORMAT_SPIRV) {
-		code = @embedFile("../shaders/shader.spv");
+		if (stage == sdl.SDL_GPU_SHADERSTAGE_VERTEX) {
+            code = @embedFile("../shaders/compiled/" ++ file_name ++ ".vert.spv");
+        } else if (stage == sdl.SDL_GPU_SHADERSTAGE_FRAGMENT) {
+            code = @embedFile("../shaders/compiled/" ++ file_name ++ ".frag.spv");
+        } else @panic("unknown stage");
         code_format = sdl.SDL_GPU_SHADERFORMAT_SPIRV;
 	} else if (shaderFormats & sdl.SDL_GPU_SHADERFORMAT_MSL == sdl.SDL_GPU_SHADERFORMAT_MSL) {
-		code = @embedFile("../shaders/shader.metal");
+		if (stage == sdl.SDL_GPU_SHADERSTAGE_VERTEX) {
+            code = @embedFile("../shaders/compiled/" ++ file_name ++ ".vert.metal");
+        } else if (stage == sdl.SDL_GPU_SHADERSTAGE_FRAGMENT) {
+            code = @embedFile("../shaders/compiled/" ++ file_name ++ ".frag.metal");
+        } else @panic("unknown stage");
         code_format = sdl.SDL_GPU_SHADERFORMAT_MSL;
 	} else {
         @panic("no supported shader format");
