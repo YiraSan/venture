@@ -53,6 +53,21 @@ pub fn setRotation(self: *Instance, x: ?f32, y: ?f32, z: ?f32) void {
 }
 
 pub fn destroy(self: *Instance) void {
+    const instances = self.container.instances;
+    const raw_instances = self.container.raw_instances;
+
+    const i = self.index;
+
+    if (instances.items.len - 1 == i) {
+        instances.pop();
+        raw_instances.pop();
+    } else {
+        instances.items[i] = instances.pop();
+        instances.items[i].index = i;
+        raw_instances.items[i] = raw_instances.pop();
+        self.container.remap_instances = true;
+    }
+
     self.container.scene.journey.allocator.destroy(self);
 }
 
