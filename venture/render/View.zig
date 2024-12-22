@@ -18,6 +18,12 @@ camera_rotation: @Vector(3, f32),
 camera_uniform: zmath.Mat,
 projection_matrix: zmath.Mat,
 
+projection: Projection,
+texture_width: u32,
+texture_height: u32,
+
+depth_texture: ?*sdl.SDL_GPUTexture,
+
 pub const Target = union(enum) {
     window: *venture.core.Window,
 };
@@ -51,6 +57,8 @@ pub fn create(journey: *venture.core.Journey, options: Options) !*View {
     view.graphics_pipeline = null;
     view.clear_color = null;
 
+    view.projection = Projection { .perspective = .{ .fov = 60.0 * std.math.pi / 180.0 } };
+
     view.setClearColor(options.clear_color);
     view.setScene(options.scene);
     try view.setTarget(options.target);
@@ -60,11 +68,25 @@ pub fn create(journey: *venture.core.Journey, options: Options) !*View {
     view.camera_coordinate = .{ 0.0, 0.0, 0.0 };
     view.camera_rotation = .{ 0.0, 0.0, 0.0 };
 
-    view.projection_matrix = zmath.perspectiveFovLh(45.0 * std.math.pi / 180.0, 640.0 / 480.0, 0.01, 100);
+    view.setProjection(options.projection);
 
     view.update();
 
     return view;
+}
+
+pub fn setProjection(self: *View, projection: ?Projection) void {
+    if (projection) |proj| {
+        self.projection = proj;
+    }
+
+    const width: f32 = @floatFromInt(self.texture_width);
+    const height: f32 = @floatFromInt(self.texture_height);
+
+    self.projection_matrix = switch (self.projection) {
+        .orthographic => zmath.orthographicLh(width/25.0, height/25.0, 0.01, 100),
+        .perspective => |perspective| zmath.perspectiveFovLh(perspective.fov, width / height, 0.01, 100),
+    };
 }
 
 pub fn setClearColor(self: *View, color: ?Color) void {
@@ -90,6 +112,32 @@ pub fn setTarget(self: *View, target: ?Target) !void {
                             },
                         }
                     },
+                    .has_depth_stencil_target = true,
+                    .depth_stencil_format = sdl.SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT
+                },
+
+                .depth_stencil_state = .{
+                    .enable_stencil_test = true,
+                    .enable_depth_write = true,
+                    .compare_op = sdl.SDL_GPU_COMPAREOP_LESS,
+                    .front_stencil_state = .{
+                        .compare_op = sdl.SDL_GPU_COMPAREOP_EQUAL, // Passer uniquement si les valeurs correspondent
+                        .depth_fail_op = sdl.SDL_GPU_STENCILOP_KEEP,
+                        .pass_op = sdl.SDL_GPU_STENCILOP_REPLACE,  // Remplacer la valeur du stencil en cas de succès
+                        .fail_op = sdl.SDL_GPU_STENCILOP_KEEP
+                    },
+                    .back_stencil_state = .{
+                        .compare_op = sdl.SDL_GPU_COMPAREOP_EQUAL,
+                        .depth_fail_op = sdl.SDL_GPU_STENCILOP_KEEP,
+                        .pass_op = sdl.SDL_GPU_STENCILOP_REPLACE,
+                        .fail_op = sdl.SDL_GPU_STENCILOP_KEEP
+                    },
+                },
+
+                .rasterizer_state = .{
+                    .cull_mode = sdl.SDL_GPU_CULLMODE_BACK,
+                    .fill_mode = sdl.SDL_GPU_FILLMODE_FILL,
+                    .front_face = sdl.SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
                 },
 
                 .vertex_input_state = .{
@@ -125,11 +173,34 @@ pub fn setTarget(self: *View, target: ?Target) !void {
             },
         );
 
+        self.depth_texture = sdl.SDL_CreateGPUTexture(
+            self.journey.gpu_device, 
+        &sdl.SDL_GPUTextureCreateInfo {
+                .@"type" = sdl.SDL_GPU_TEXTURETYPE_2D,
+                .format = sdl.SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT,
+                .width = 640,
+                .height = 480,
+                .layer_count_or_depth = 1,
+                .num_levels = 1,
+                .sample_count = 1,
+                .usage = sdl.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+                .props = 0,
+            }
+        );
+
         // TODO graphics pipeline builder will be added to dynamically change the pipeline
 
     }
 
     self.target = target;
+
+    self.texture_width = if (self.target) |targ| switch (targ) {
+        .window => |win| win.getWidth()
+    } else 250;
+
+    self.texture_height = if (self.target) |targ| switch (targ) {
+        .window => |win| win.getHeight()
+    } else 250;
 }
 
 pub fn setScene(self: *View, scene: ?*venture.render.Scene) void {
@@ -169,6 +240,12 @@ pub fn render(self: *View) !void {
             },
         }
 
+        if (texture_width != self.texture_width or texture_height != self.texture_height) {
+            self.texture_width = texture_width;
+            self.texture_height = texture_height;
+            self.setProjection(null);
+        }
+
         if (self.scene) |scene| {
             const copy_pass = sdl.SDL_BeginGPUCopyPass(command_buffer);
 
@@ -196,7 +273,15 @@ pub fn render(self: *View) !void {
                 .store_op = sdl.SDL_GPU_STOREOP_STORE,
             }, 
             1, 
-            null
+            &sdl.SDL_GPUDepthStencilTargetInfo {
+                .clear_depth = 1.0,
+                .load_op = sdl.SDL_GPU_LOADOP_CLEAR,
+                .store_op = sdl.SDL_GPU_STOREOP_DONT_CARE,
+                .stencil_load_op = sdl.SDL_GPU_LOADOP_DONT_CARE,
+                .stencil_store_op = sdl.SDL_GPU_STOREOP_DONT_CARE,
+                .texture = self.depth_texture,
+                .cycle = true,
+            }
         );
 
         sdl.SDL_BindGPUGraphicsPipeline(render_pass, self.graphics_pipeline);
