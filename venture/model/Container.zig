@@ -51,6 +51,8 @@ pub fn create(model: *venture.model.Model, scene: *venture.render.Scene) !*Conta
 }
 
 pub fn __remap(self: *Container, copy_pass: ?*sdl.SDL_GPUCopyPass) !void {
+    if (self.instances.items.len == 0) return;
+
     if (self.remap_instances) {
         self.remap_instances = false;
 
@@ -85,6 +87,8 @@ pub fn __remap(self: *Container, copy_pass: ?*sdl.SDL_GPUCopyPass) !void {
 }
 
 pub fn __render(self: *Container, render_pass: ?*sdl.SDL_GPURenderPass) !void {
+    if (self.instances.items.len == 0) return;
+
     try self.model.__setup(render_pass);
 
     sdl.SDL_BindGPUVertexStorageBuffers(
