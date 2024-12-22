@@ -1,6 +1,7 @@
 const std = @import("std");
 const venture = @import("venture");
 const sdl = @import("sdl");
+const zmath = @import("zmath");
 
 const View = @This();
 journey: *venture.core.Journey,
@@ -11,6 +12,12 @@ clear_color: ?Color,
 
 graphics_pipeline: ?*sdl.SDL_GPUGraphicsPipeline,
 
+camera_coordinate: @Vector(3, f32),
+camera_rotation: @Vector(3, f32),
+
+camera_uniform: zmath.Mat,
+projection_matrix: zmath.Mat,
+
 pub const Target = union(enum) {
     window: *venture.core.Window,
 };
@@ -20,58 +27,19 @@ pub const Color = struct {
     r: f32, g: f32, b: f32, a: f32,
 };
 
+pub const Projection = union(enum) {
+    orthographic,
+    perspective: struct {
+        fov: f32
+    }
+};
+
 pub const Options = struct {
     target: ?Target = null,
     scene: ?*venture.render.Scene = null,
     clear_color: ?Color = null,
+    projection: ?Projection = null,
 };
-
-fn loadShader(
-    self: *View,
-    entrypoint: []const u8,
-    stage: sdl.SDL_GPUShaderStage,
-    num_samplers: u32,
-    num_storage_buffers: u32,
-    num_storage_textures: u32,
-    num_uniform_buffers: u32,
-) !*sdl.SDL_GPUShader {
-
-    const shaderFormats = sdl.SDL_GetGPUShaderFormats(self.journey.gpu_device);
-
-    var code: []const u8 = undefined;
-    var code_format = sdl.SDL_GPU_SHADERFORMAT_INVALID;
-    
-    if (shaderFormats & sdl.SDL_GPU_SHADERFORMAT_SPIRV == sdl.SDL_GPU_SHADERFORMAT_SPIRV) {
-		code = @embedFile("../shaders/shader.spv");
-        code_format = sdl.SDL_GPU_SHADERFORMAT_SPIRV;
-	} else if (shaderFormats & sdl.SDL_GPU_SHADERFORMAT_MSL == sdl.SDL_GPU_SHADERFORMAT_MSL) {
-		code = @embedFile("../shaders/shader.metal");
-        code_format = sdl.SDL_GPU_SHADERFORMAT_MSL;
-	} else {
-        @panic("no supported shader format");
-    }
-
-    const shader = if (sdl.SDL_CreateGPUShader(self.journey.gpu_device, 
-        &sdl.SDL_GPUShaderCreateInfo {
-            .code = @ptrCast(code),
-            .code_size = code.len,
-            .entrypoint = @ptrCast(entrypoint),
-            .format = @intCast(code_format),
-            .stage = stage,
-            .num_samplers = num_samplers,
-            .num_storage_buffers = num_storage_buffers,
-            .num_storage_textures = num_storage_textures,
-            .num_uniform_buffers = num_uniform_buffers,
-            
-        },
-    )) |shdr| shdr else {
-        std.log.err("Failed creating shaders: {s}", .{ sdl.SDL_GetError() });
-        return error.InvalidShader;
-    };
-
-    return shader;
-
-}
 
 pub fn create(journey: *venture.core.Journey, options: Options) !*View {
     const view = try journey.allocator.create(View);
@@ -87,6 +55,15 @@ pub fn create(journey: *venture.core.Journey, options: Options) !*View {
     view.setScene(options.scene);
     try view.setTarget(options.target);
 
+    view.camera_uniform = zmath.identity();
+
+    view.camera_coordinate = .{ 0.0, 0.0, 0.0 };
+    view.camera_rotation = .{ 0.0, 0.0, 0.0 };
+
+    view.projection_matrix = zmath.perspectiveFovLh(45.0 * std.math.pi / 180.0, 640.0 / 480.0, 0.01, 100);
+
+    view.update();
+
     return view;
 }
 
@@ -100,22 +77,6 @@ pub fn setTarget(self: *View, target: ?Target) !void {
         if (self.target) |_| {
             sdl.SDL_ReleaseGPUGraphicsPipeline(self.journey.gpu_device, self.graphics_pipeline);
         }
-
-        const vertexShader = try self.loadShader(
-            "vs_main", 
-            sdl.SDL_GPU_SHADERSTAGE_VERTEX, 
-            0, 
-            0, 
-            0, 
-            0);
-
-        const fragmentShader = try self.loadShader(
-            "fs_main", 
-            sdl.SDL_GPU_SHADERSTAGE_FRAGMENT, 
-            0, 
-            0, 
-            0, 
-            0);
         
         self.graphics_pipeline = sdl.SDL_CreateGPUGraphicsPipeline(
             self.journey.gpu_device,
@@ -159,16 +120,12 @@ pub fn setTarget(self: *View, target: ?Target) !void {
                 },
 
                 .primitive_type = sdl.SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-                .vertex_shader = vertexShader,
-                .fragment_shader = fragmentShader
+                .vertex_shader = self.journey.vertex_shader,
+                .fragment_shader = self.journey.fragment_shader
             },
         );
 
         // TODO graphics pipeline builder will be added to dynamically change the pipeline
-        // TODO shaders will be moved to journey
-
-        sdl.SDL_ReleaseGPUShader(self.journey.gpu_device, vertexShader);
-        sdl.SDL_ReleaseGPUShader(self.journey.gpu_device, fragmentShader);
 
     }
 
@@ -244,7 +201,12 @@ pub fn render(self: *View) !void {
 
         sdl.SDL_BindGPUGraphicsPipeline(render_pass, self.graphics_pipeline);
 
-        // TODO set camera buffers
+        sdl.SDL_PushGPUVertexUniformData(
+            command_buffer, 
+            0, 
+            &self.camera_uniform, 
+            @sizeOf(zmath.Mat)
+        );
 
         if (self.scene) |scene| {
             try scene.__render(render_pass);
@@ -257,6 +219,33 @@ pub fn render(self: *View) !void {
             return error.FailedSubmittingCommandBuffer;
         }
     }
+}
+
+pub fn update(self: *View) void {
+    var rotation_matrix = zmath.rotationZ(self.camera_rotation[2]);
+    rotation_matrix = zmath.mul(rotation_matrix, zmath.rotationY(self.camera_rotation[1]));
+    rotation_matrix = zmath.mul(rotation_matrix, zmath.rotationX(self.camera_rotation[0]));
+
+    const translation_matrix = zmath.translation(
+        -self.camera_coordinate[0], 
+        -self.camera_coordinate[1], 
+        -self.camera_coordinate[2]);
+
+    const view_matrix = zmath.mul(translation_matrix, rotation_matrix);
+
+    self.camera_uniform = zmath.mul(self.projection_matrix, view_matrix);
+}
+
+pub fn setCoordinate(self: *View, x: ?f32, y: ?f32, z: ?f32) void {
+    if (x) |c| self.camera_coordinate[0] = c;
+    if (y) |c| self.camera_coordinate[1] = c;
+    if (z) |c| self.camera_coordinate[2] = c;
+}
+
+pub fn setRotation(self: *View, x: ?f32, y: ?f32, z: ?f32) void {
+    if (x) |c| self.camera_rotation[0] = c;
+    if (y) |c| self.camera_rotation[1] = c;
+    if (z) |c| self.camera_rotation[2] = c;
 }
 
 pub fn destroy(self: *View) void {
