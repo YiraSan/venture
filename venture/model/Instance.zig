@@ -27,17 +27,15 @@ pub fn create(container: *venture.model.Container) !*Instance {
 }
 
 pub fn update(self: *Instance) void {
-    var rotation_matrix = zmath.rotationZ(self.rotation[2]);
-    rotation_matrix = zmath.mul(rotation_matrix, zmath.rotationY(self.rotation[1]));
-    rotation_matrix = zmath.mul(rotation_matrix, zmath.rotationX(self.rotation[0]));
+    const rotation_matrix = zmath.quatToMat(zmath.quatFromRollPitchYaw(
+        self.rotation[0], self.rotation[1], self.rotation[2]
+    ));
 
     const translation_matrix = zmath.translation(
-        self.coordinate[0], 
-        self.coordinate[1], 
-        self.coordinate[2]);
+        self.coordinate[0], self.coordinate[1], self.coordinate[2]);
 
     self.container.raw_instances.items[self.index] = .{ 
-        .model = zmath.mul(translation_matrix, rotation_matrix),
+        .model = zmath.mul(rotation_matrix, translation_matrix),
     };
     self.container.remap_instances = true;
 }

@@ -222,14 +222,13 @@ pub fn render(self: *View) !void {
 }
 
 pub fn update(self: *View) void {
-    var rotation_matrix = zmath.rotationZ(self.camera_rotation[2]);
-    rotation_matrix = zmath.mul(rotation_matrix, zmath.rotationY(self.camera_rotation[1]));
-    rotation_matrix = zmath.mul(rotation_matrix, zmath.rotationX(self.camera_rotation[0]));
+    const rotation_matrix = zmath.quatToMat(zmath.quatFromRollPitchYaw(
+        self.camera_rotation[0], self.camera_rotation[1], self.camera_rotation[2]
+    ));
 
     const translation_matrix = zmath.translation(
-        -self.camera_coordinate[0], 
-        -self.camera_coordinate[1], 
-        -self.camera_coordinate[2]);
+        -self.camera_coordinate[0], -self.camera_coordinate[1], -self.camera_coordinate[2]
+    );
 
     const view_matrix = zmath.mul(translation_matrix, rotation_matrix);
 
