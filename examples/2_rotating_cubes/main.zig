@@ -48,7 +48,7 @@ pub fn main() !void {
     }
     defer {
         for (0..20) |i| {
-            scene.containers.items[0].instances.items[i].destroy();
+            container.items[0].instances.items[i].destroy();
         }
     }
     
@@ -61,7 +61,7 @@ pub fn main() !void {
         };
 
         for (0..20) |i| {
-            const instance = scene.containers.items[0].instances.items[i];
+            const instance = container.instances.items[i];
             const fi = @as(f32, @floatFromInt(i)) * 9.0 * std.math.pi / 180.0;
             instance.setRotation(
                 -@as(f32, @floatFromInt(journey.getTick())) * std.math.pi / 180.0 + fi, 
