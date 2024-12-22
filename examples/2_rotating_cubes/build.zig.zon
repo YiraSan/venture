@@ -1,0 +1,10 @@
+.{
+    .name = "rotating_cubes_example",
+    .version = "0.0.0",
+    .dependencies = .{
+        .venture = .{
+            .path = "../../"
+        }
+    },
+    .paths = .{ "." },
+}
