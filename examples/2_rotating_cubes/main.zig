@@ -46,11 +46,6 @@ pub fn main() !void {
         instance.setCoordinate(x, y, 15.0);
         instance.update();
     }
-    defer {
-        for (0..20) |i| {
-            container.instances.items[i].destroy();
-        }
-    }
     
     while (true) {
         if (venture.poll()) |event| switch (event) {
