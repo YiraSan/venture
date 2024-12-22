@@ -19,13 +19,6 @@ pub fn main() !void {
     const scene = try journey.createScene(.{});
     defer scene.destroy();
 
-    const view = try journey.createView(.{ 
-        .target = window.target(),
-        .scene = scene,
-        .projection = .orthographic,
-    });
-    defer view.destroy();
-
     const model = try journey.createModel(venture.model.Mesh.cube);
     defer model.destroy();
 
@@ -46,6 +39,13 @@ pub fn main() !void {
         instance.setCoordinate(x, y, 15.0);
         instance.update();
     }
+
+    const view = try journey.createView(.{ 
+        .target = window.target(),
+        .scene = scene,
+        .projection = .orthographic,
+    });
+    defer view.destroy();
     
     while (true) {
         if (venture.poll()) |event| switch (event) {

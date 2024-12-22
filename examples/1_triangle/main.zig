@@ -19,12 +19,6 @@ pub fn main() !void {
     const scene = try journey.createScene(.{});
     defer scene.destroy();
 
-    const view = try journey.createView(.{ 
-        .target = window.target(),
-        .scene = scene
-    });
-    defer view.destroy();
-
     const model = try journey.createModel(venture.model.Mesh.triangle);
     defer model.destroy();
 
@@ -36,6 +30,12 @@ pub fn main() !void {
 
     instance.setCoordinate(0.0, 0.0, 2.5);
     instance.update();
+
+    const view = try journey.createView(.{ 
+        .target = window.target(),
+        .scene = scene
+    });
+    defer view.destroy();
 
     while (true) {
         if (venture.poll()) |event| switch (event) {
