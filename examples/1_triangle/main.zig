@@ -34,6 +34,9 @@ pub fn main() !void {
     const instance = try container.createInstance();
     defer instance.destroy();
 
+    instance.setCoordinate(0.0, 0.0, 2.5);
+    instance.update();
+
     while (true) {
         if (venture.poll()) |event| switch (event) {
             .quit => {
