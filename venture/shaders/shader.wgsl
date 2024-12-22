@@ -3,10 +3,10 @@ struct Payload {
     @location(0) color: vec4<f32>,
 }
 
-@group(0) @binding(0)
+@group(1) @binding(0)
 var<uniform> view_projection: mat4x4<f32>;
 
-@group(0) @binding(1)
+@group(0) @binding(0)
 var<storage, read> instances: array<mat4x4<f32>>;
 
 @vertex
