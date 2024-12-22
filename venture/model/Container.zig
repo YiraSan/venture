@@ -79,13 +79,13 @@ pub fn __remap(self: *Container, copy_pass: ?*sdl.SDL_GPUCopyPass) !void {
             );
         }
 
-        const buffer: [*]venture.model.Instance.Raw = @alignCast(@ptrCast(sdl.SDL_MapGPUTransferBuffer(
+        const buffer = sdl.SDL_MapGPUTransferBuffer(
             self.scene.journey.gpu_device,
             self.transfer_buffer,
             false
-        )));
+        );
 
-        @memcpy(buffer[0..self.raw_instances.items.len], self.raw_instances.items);
+        _ = sdl.memcpy(buffer, self.raw_instances.items.ptr, @intCast(@sizeOf(venture.model.Instance.Raw) * self.raw_instances.items.len));
 
         sdl.SDL_UnmapGPUTransferBuffer(self.scene.journey.gpu_device, self.transfer_buffer);
 
