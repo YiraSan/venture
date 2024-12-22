@@ -107,6 +107,9 @@ pub fn __render(self: *Container, render_pass: ?*sdl.SDL_GPURenderPass) !void {
 pub fn destroy(self: *Container) void {
     sdl.SDL_ReleaseGPUBuffer(self.scene.journey.gpu_device, self.instance_buffer);
     sdl.SDL_ReleaseGPUTransferBuffer(self.scene.journey.gpu_device, self.transfer_buffer);
+    for (self.instances.items) |instance| {
+        self.scene.journey.allocator.destroy(instance);
+    }
     self.instances.deinit(self.scene.journey.allocator);
     self.raw_instances.deinit(self.scene.journey.allocator);
     self.scene.journey.allocator.destroy(self);
